@@ -3,13 +3,34 @@ from discord import app_commands
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+from flask import Flask
+from threading import Thread
 
+# ----------------------------
+# KEEP-ALIVE WEB SERVER SETUP
+# ----------------------------
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "I'm alive!"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# ----------------------------
+# DISCORD BOT SETUP
+# ----------------------------
 load_dotenv()
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-STAFF_CHANNEL_ID = 1428374679915069513  # 🔧 Replace this with your private channel ID
+STAFF_CHANNEL_ID = 1428374679915069513  # 🔧 Replace with your private channel ID
 
 
 class SubmissionModal(discord.ui.Modal, title="Submit Your Entry"):
@@ -77,7 +98,12 @@ async def on_ready():
         print(e)
 
 
+# ----------------------------
+# RUN BOT + KEEP-ALIVE SERVER
+# ----------------------------
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 if not TOKEN:
     raise ValueError("❌ DISCORD_BOT_TOKEN not found in environment variables. Please add it to your .env file.")
+
+keep_alive()
 bot.run(TOKEN)
