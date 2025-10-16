@@ -45,33 +45,35 @@ class SubmissionModal(discord.ui.Modal, title="Submit Your Entry"):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-            await interaction.response.defer(ephemeral=True)  # Prevent timeout
+        await interaction.response.defer(ephemeral=True)
 
-            staff_channel = bot.get_channel(STAFF_CHANNEL_ID)
-            urls = [u.strip() for u in self.image_links.value.splitlines() if u.strip()]
+        staff_channel = bot.get_channel(STAFF_CHANNEL_ID)
+        urls = [u.strip() for u in self.image_links.value.splitlines() if u.strip()]
 
-            if len(urls) == 0:
-                await interaction.followup.send("❌ You must submit at least one image link.", ephemeral=True)
-                return
+        if len(urls) == 0:
+            await interaction.followup.send("❌ You must submit at least one image link.", ephemeral=True)
+            return
 
-            embed = discord.Embed(title="📨 New Submission", color=discord.Color.blurple())
-            embed.add_field(name="IGN", value=self.ign.value, inline=False)
-            embed.add_field(name="Number of URLs", value=str(len(urls)), inline=True)
+        embed = discord.Embed(title="📨 New Submission", color=discord.Color.blurple())
+        embed.add_field(name="IGN", value=self.ign.value, inline=False)
+        embed.add_field(name="Number of URLs", value=str(len(urls)), inline=True)
 
-            for i, url in enumerate(urls, start=1):
-                embed.add_field(name=f"Image {i}", value=url, inline=False)
+        for i, url in enumerate(urls, start=1):
+            embed.add_field(name=f"Image {i}", value=url, inline=False)
 
-            embed.set_footer(text=f"Submitted by {interaction.user}")
-            await staff_channel.send(embed=embed)
-
-            await interaction.followup.send(f"✅ Submission received! You submitted **{len(urls)}** image link(s).", ephemeral=True)
-
+        embed.set_footer(text=f"Submitted by {interaction.user}")
+        await staff_channel.send(embed=embed)
+        await interaction.followup.send(f"✅ Submission received! You submitted **{len(urls)}** image link(s).", ephemeral=True)
 
 
 class SubmitButton(discord.ui.View):
-    @discord.ui.button(label="Submit", style=discord.ButtonStyle.green)
+    def __init__(self):
+        super().__init__(timeout=None)  # 👈 Needed for persistent view
+
+    @discord.ui.button(label="Submit", style=discord.ButtonStyle.blurple)
     async def submit(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(SubmissionModal())
+        modal = SubmissionModal()
+        await interaction.response.send_modal(modal)
 
 
 @bot.tree.command(name="post_submission_button", description="Post the submission button in this channel.")
@@ -92,6 +94,10 @@ async def on_ready():
         print(f"Synced {len(synced)} slash command(s)")
     except Exception as e:
         print(e)
+
+    # 👇 Keep button alive even after restart
+    bot.add_view(SubmitButton())
+    print("✅ Persistent view added!")
 
 
 # ----------------------------
