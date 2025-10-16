@@ -45,31 +45,27 @@ class SubmissionModal(discord.ui.Modal, title="Submit Your Entry"):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        staff_channel = bot.get_channel(STAFF_CHANNEL_ID)
+            await interaction.response.defer(ephemeral=True)  # Prevent timeout
 
-        # Split links into list, remove empty lines/spaces
-        urls = [u.strip() for u in self.image_links.value.splitlines() if u.strip()]
-        if len(urls) == 0:
-            await interaction.response.send_message(
-                "❌ You must submit at least one image link.",
-                ephemeral=True
-            )
-            return
+            staff_channel = bot.get_channel(STAFF_CHANNEL_ID)
+            urls = [u.strip() for u in self.image_links.value.splitlines() if u.strip()]
 
-        embed = discord.Embed(title="📨 New Submission", color=discord.Color.blurple())
-        embed.add_field(name="IGN", value=self.ign.value, inline=False)
-        embed.add_field(name="Number of URLs", value=str(len(urls)), inline=True)
+            if len(urls) == 0:
+                await interaction.followup.send("❌ You must submit at least one image link.", ephemeral=True)
+                return
 
-        for i, url in enumerate(urls, start=1):
-            embed.add_field(name=f"Image {i}", value=url, inline=False)
+            embed = discord.Embed(title="📨 New Submission", color=discord.Color.blurple())
+            embed.add_field(name="IGN", value=self.ign.value, inline=False)
+            embed.add_field(name="Number of URLs", value=str(len(urls)), inline=True)
 
-        embed.set_footer(text=f"Submitted by {interaction.user}")
+            for i, url in enumerate(urls, start=1):
+                embed.add_field(name=f"Image {i}", value=url, inline=False)
 
-        await staff_channel.send(embed=embed)
-        await interaction.response.send_message(
-            f"✅ Submission received! You submitted **{len(urls)}** image link(s).",
-            ephemeral=True
-        )
+            embed.set_footer(text=f"Submitted by {interaction.user}")
+            await staff_channel.send(embed=embed)
+
+            await interaction.followup.send(f"✅ Submission received! You submitted **{len(urls)}** image link(s).", ephemeral=True)
+
 
 
 class SubmitButton(discord.ui.View):
